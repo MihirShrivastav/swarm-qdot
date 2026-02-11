@@ -53,6 +53,7 @@ Status legend:
 | `done` | Weighted orthonormality report | Stores `Psi^T W Psi` diagnostics. |
 | `done` | Stochastic training quadrature modes | Added `jittered_grid` and `monte_carlo` training options. |
 | `done` | Float64 training mode | Configurable high-precision path for more stable eigensolve optimization. |
+| `done` | Plateau LR decay scheduler | Added configurable `ReduceLROnPlateau` with EMA-smoothed monitor. |
 | `backlog` | PDE residual tracking during late polish | For extra quality control in final refinement. |
 | `backlog` | Early-stop criteria report card | Explicit pass/fail against configured thresholds. |
 

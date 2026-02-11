@@ -1,0 +1,63 @@
+{
+  "run_id": "20260211-142100_quick-lemur_k4_m8_s42_d24c8b1",
+  "final_E_dimless": [
+    5.838980650526255,
+    6.291951417012685,
+    8.969273308112497,
+    11.338052735512981
+  ],
+  "steps": 2000,
+  "training_dtype": "float64",
+  "sampling_mode": "jittered_grid",
+  "lr_schedule": {
+    "enabled": true,
+    "type": "plateau"
+  },
+  "lr_dropout_info": {
+    "num_drops": 3,
+    "initial_lr": 0.0005,
+    "final_lr": 6.25e-05,
+    "min_lr_seen": 6.25e-05,
+    "drops": [
+      {
+        "step": 814,
+        "lr_prev": 0.0005,
+        "lr_new": 0.00025,
+        "lr_monitor": 32.58514151138052
+      },
+      {
+        "step": 1517,
+        "lr_prev": 0.00025,
+        "lr_new": 0.000125,
+        "lr_monitor": 32.508470448763546
+      },
+      {
+        "step": 1918,
+        "lr_prev": 0.000125,
+        "lr_new": 6.25e-05,
+        "lr_monitor": 32.473652544448704
+      }
+    ]
+  },
+  "plots": {
+    "potential_map": "potential_map.png",
+    "potential_map_full": "potential_map_full.png",
+    "potential_map_focus": "potential_map_focus.png",
+    "potential_slice_y0": "potential_slice_y0.png",
+    "training_dashboard": "training_dashboard.png",
+    "energy_spectrum": "energy_spectrum.png"
+  },
+  "potential_plot_range": {
+    "vmin": 0.02570077911304827,
+    "vmax_full": 368.88430208688425,
+    "vmax_focus": 12.706710208943337,
+    "focus_scale": 4.0,
+    "barrier_dimless": 3.170252357457572
+  },
+  "checkpoints": {
+    "best": "model_best.pt",
+    "final": "model_final.pt",
+    "best_step": 1964,
+    "best_loss_eigsum": 32.33690106097856
+  }
+}

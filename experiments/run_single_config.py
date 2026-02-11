@@ -49,6 +49,46 @@ def _parse_dtype(name: str) -> torch.dtype:
     raise ValueError("training.dtype must be one of: float32, float64")
 
 
+def _extract_lr_drop_events(history: list[dict]) -> dict:
+    if not history:
+        return {
+            "num_drops": 0,
+            "initial_lr": None,
+            "final_lr": None,
+            "min_lr_seen": None,
+            "drops": [],
+        }
+
+    lrs = [float(h.get("lr", float("nan"))) for h in history]
+    lrs_clean = [lr for lr in lrs if np.isfinite(lr)]
+    drops: list[dict] = []
+    prev_lr = None
+    for h in history:
+        step = int(h.get("step", 0))
+        lr_now = float(h.get("lr", float("nan")))
+        if not np.isfinite(lr_now):
+            continue
+        lr_reduced_flag = bool(h.get("lr_reduced", False))
+        if prev_lr is not None and (lr_reduced_flag or lr_now < prev_lr - 1e-20):
+            drops.append(
+                {
+                    "step": step,
+                    "lr_prev": float(prev_lr),
+                    "lr_new": float(lr_now),
+                    "lr_monitor": float(h.get("lr_monitor", float("nan"))),
+                }
+            )
+        prev_lr = lr_now
+
+    return {
+        "num_drops": len(drops),
+        "initial_lr": float(lrs_clean[0]) if lrs_clean else None,
+        "final_lr": float(lrs_clean[-1]) if lrs_clean else None,
+        "min_lr_seen": float(min(lrs_clean)) if lrs_clean else None,
+        "drops": drops,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default=None)
@@ -150,13 +190,15 @@ def main() -> None:
                     best_ckpt_path,
                 )
             if step % log_every == 0 or step == 1:
-                eig0 = metrics["eigvals"][0] if metrics["eigvals"] else float("nan")
+                e_first = metrics["eigvals"][0] if metrics["eigvals"] else float("nan")
+                lr_now = float(metrics.get("lr", float("nan")))
                 logger.info(
-                    "step=%d loss=%.6f eigsum=%.6f E0=%.6f",
+                    "step=%d loss=%.6f eigsum=%.6f E_first=%.6f lr=%.2e",
                     step,
                     metrics["loss_total"],
                     metrics["loss_eigsum"],
-                    eig0,
+                    e_first,
+                    lr_now,
                 )
 
         outputs = train_block(
@@ -284,6 +326,11 @@ def main() -> None:
                 "steps": len(outputs.history),
                 "training_dtype": str(dtype).replace("torch.", ""),
                 "sampling_mode": str(cfg["training"].get("sampling_mode", "jittered_grid")),
+                "lr_schedule": {
+                    "enabled": bool(cfg["training"].get("lr_schedule", {}).get("enabled", False)),
+                    "type": str(cfg["training"].get("lr_schedule", {}).get("type", "plateau")),
+                },
+                "lr_dropout_info": _extract_lr_drop_events(outputs.history),
                 "plots": {
                     "potential_map": "potential_map.png",
                     "potential_map_full": "potential_map_full.png",

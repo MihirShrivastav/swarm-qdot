@@ -1,0 +1,7 @@
+{
+  "best_checkpoint": "model_best.pt",
+  "best_step": 1964,
+  "best_loss_eigsum": 32.33690106097856,
+  "final_checkpoint": "model_final.pt",
+  "final_step": 2000
+}

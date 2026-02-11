@@ -1,0 +1,74 @@
+{
+  "physics": {
+    "material": "GaAs",
+    "m_eff": 0.067,
+    "L0_nm": 30.0
+  },
+  "domain": {
+    "X": 4.0,
+    "Y": 4.0,
+    "nq": 100
+  },
+  "potential": {
+    "type": "biquadratic_dqd",
+    "param_mode": "targets",
+    "a": 1.5,
+    "hbar_omega_x_meV": 2.9999999999999996,
+    "hbar_omega_y_meV": 5.0,
+    "delta": 0.0,
+    "c4": 0.6262226878928537,
+    "c2y": 15.655567197321348,
+    "beta_x": 5.636004191035684,
+    "beta_y": 15.655567197321348,
+    "barrier_dimless": 3.170252357457572,
+    "barrier_meV": 2.0030852802382726,
+    "E0_meV": 0.6318378016583748
+  },
+  "solver": {
+    "K": 4,
+    "M": 8,
+    "use_envelope": true,
+    "envelope": {
+      "alpha": 0.25,
+      "beta": 0.35
+    },
+    "use_parity": false,
+    "parity_even": 4,
+    "parity_odd": 4
+  },
+  "model": {
+    "hidden_features": 64,
+    "hidden_layers": 6,
+    "first_omega_0": 30.0,
+    "hidden_omega_0": 30.0
+  },
+  "training": {
+    "optimizer": "adam",
+    "lr": 0.0005,
+    "steps": 2000,
+    "grad_clip": 1.0,
+    "log_every": 50,
+    "dtype": "float64",
+    "sampling_mode": "jittered_grid",
+    "grid_jitter_frac": 0.35,
+    "mc_points": 4096,
+    "lr_schedule": {
+      "enabled": true,
+      "type": "plateau",
+      "factor": 0.5,
+      "patience": 300,
+      "threshold": 0.0001,
+      "threshold_mode": "rel",
+      "cooldown": 100,
+      "min_lr": 1e-06,
+      "eps": 1e-12,
+      "monitor_ema_alpha": 0.1
+    },
+    "loss_weights": {
+      "eigsum": 1.0,
+      "S_condition": 0.001,
+      "boundary": 0.0,
+      "pde_polish": 0.0
+    }
+  }
+}

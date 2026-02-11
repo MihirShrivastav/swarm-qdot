@@ -1,0 +1,11 @@
+﻿{
+  "training": {
+    "steps": 3,
+    "log_every": 1,
+    "sampling_mode": "fixed_grid",
+    "dtype": "float32"
+  },
+  "domain": {"nq": 20},
+  "solver": {"K": 2, "M": 4},
+  "model": {"hidden_features": 32, "hidden_layers": 1}
+}

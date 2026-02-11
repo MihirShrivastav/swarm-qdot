@@ -137,6 +137,15 @@ For biquadratic potentials, the run saves resolved physical/derived values in:
 | `sampling_mode` | Quadrature sampling strategy | `jittered_grid`/`monte_carlo` reduce fixed-grid aliasing; `fixed_grid` is deterministic. |
 | `grid_jitter_frac` | Jitter amplitude for `jittered_grid` | Larger values add stronger anti-aliasing but more stochasticity. |
 | `mc_points` | Number of points for `monte_carlo` mode | More points reduce variance but increase step cost. |
+| `lr_schedule.enabled` | Enable learning-rate decay | When true, LR is reduced automatically on plateaus. |
+| `lr_schedule.type` | Scheduler type | Current supported value: `plateau`. |
+| `lr_schedule.factor` | LR decay multiplier | New LR = old LR * factor when triggered. |
+| `lr_schedule.patience` | Plateau patience (steps) | Number of bad steps before LR reduction. |
+| `lr_schedule.threshold` | Significant-improvement threshold | Small changes below threshold are treated as plateau. |
+| `lr_schedule.threshold_mode` | Threshold interpretation | `rel` or `abs` (same semantics as PyTorch `ReduceLROnPlateau`). |
+| `lr_schedule.cooldown` | Post-decay cooldown (steps) | Delay before another decay can occur. |
+| `lr_schedule.min_lr` | Lower bound on LR | Prevents LR from shrinking to zero. |
+| `lr_schedule.monitor_ema_alpha` | EMA smoothing on monitor signal | Smooths noisy eigsum when using stochastic sampling. |
 | `loss_weights.eigsum` | Weight on eigen-sum term | Increases priority on low energies. |
 | `loss_weights.S_condition` | Weight on overlap conditioning term | Stabilizes `S`; too high can slow energy minimization. |
 | `loss_weights.boundary` | Placeholder in config | Not used in current trainer implementation. |
@@ -184,6 +193,11 @@ Logged training metrics include:
 - `eigvals` (first `K`)
 - `s_min_eig`, `s_max_eig`, `s_cond_est`
 - `grad_norm`, `dt_sec`
+- `lr`, `lr_reduced`, `lr_monitor`
+
+`reports/final_summary.json` now includes:
+- `lr_schedule` metadata
+- `lr_dropout_info` with LR drop events (`step`, `lr_prev`, `lr_new`, `lr_monitor`)
 
 Potential plotting outputs include:
 - `potential_map_full.png` (true full dynamic range)

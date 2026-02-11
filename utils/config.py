@@ -36,21 +36,33 @@ DEFAULT_CONFIG = {
         "parity_odd": 4,
     },
     "model": {
-        "hidden_features": 128,
-        "hidden_layers": 3,
+        "hidden_features": 64,
+        "hidden_layers": 6,
         "first_omega_0": 30.0,
         "hidden_omega_0": 30.0,
     },
     "training": {
         "optimizer": "adam",
-        "lr": 1e-4,
-        "steps": 5000,
+        "lr": 5e-4,
+        "steps": 2000,
         "grad_clip": 1.0,
-        "log_every": 10,
+        "log_every": 50,
         "dtype": "float64",
         "sampling_mode": "jittered_grid",
         "grid_jitter_frac": 0.35,
-        "mc_points": 12000,
+        "mc_points": 4096,
+        "lr_schedule": {
+            "enabled": True,
+            "type": "plateau",
+            "factor": 0.5,
+            "patience": 300,
+            "threshold": 1e-4,
+            "threshold_mode": "rel",
+            "cooldown": 100,
+            "min_lr": 1e-6,
+            "eps": 1e-12,
+            "monitor_ema_alpha": 0.1,
+        },
         "loss_weights": {
             "eigsum": 1.0,
             "S_condition": 1e-3,
@@ -151,6 +163,29 @@ def validate_config(cfg: dict) -> dict:
         raise ValueError("training.grid_jitter_frac must be non-negative")
     if int(cfg["training"].get("mc_points", 1)) <= 0:
         raise ValueError("training.mc_points must be positive")
+
+    lr_sched = dict(cfg["training"].get("lr_schedule", {}))
+    if bool(lr_sched.get("enabled", False)):
+        if str(lr_sched.get("type", "plateau")).lower() != "plateau":
+            raise ValueError("training.lr_schedule.type must be 'plateau'")
+        factor = float(lr_sched.get("factor", 0.5))
+        if factor <= 0 or factor >= 1:
+            raise ValueError("training.lr_schedule.factor must be in (0, 1)")
+        if int(lr_sched.get("patience", 1)) < 0:
+            raise ValueError("training.lr_schedule.patience must be >= 0")
+        if float(lr_sched.get("threshold", 0.0)) < 0:
+            raise ValueError("training.lr_schedule.threshold must be >= 0")
+        if str(lr_sched.get("threshold_mode", "rel")).lower() not in {"rel", "abs"}:
+            raise ValueError("training.lr_schedule.threshold_mode must be 'rel' or 'abs'")
+        if int(lr_sched.get("cooldown", 0)) < 0:
+            raise ValueError("training.lr_schedule.cooldown must be >= 0")
+        if float(lr_sched.get("min_lr", 0.0)) < 0:
+            raise ValueError("training.lr_schedule.min_lr must be >= 0")
+        if float(lr_sched.get("eps", 0.0)) < 0:
+            raise ValueError("training.lr_schedule.eps must be >= 0")
+        alpha = float(lr_sched.get("monitor_ema_alpha", 0.1))
+        if alpha <= 0 or alpha > 1:
+            raise ValueError("training.lr_schedule.monitor_ema_alpha must be in (0, 1]")
 
     return cfg
 

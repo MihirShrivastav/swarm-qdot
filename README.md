@@ -11,6 +11,7 @@ python -m experiments.run_single_config --experiment-name block_ritz --seed 42
 Default training now uses:
 - `training.dtype = "float64"`
 - `training.sampling_mode = "jittered_grid"`
+- `training.lr_schedule.enabled = true` (plateau LR decay)
 
 to reduce fixed-grid aliasing artifacts.
 

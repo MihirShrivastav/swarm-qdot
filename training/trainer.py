@@ -61,6 +61,27 @@ def train_block(
         raise ValueError("training.sampling_mode must be one of: fixed_grid, jittered_grid, monte_carlo")
 
     optimizer = torch.optim.Adam(model.parameters(), lr=float(training["lr"]))
+    sched_cfg = dict(training.get("lr_schedule", {}))
+    use_scheduler = bool(sched_cfg.get("enabled", False))
+    scheduler = None
+    monitor_ema = None
+    monitor_alpha = float(sched_cfg.get("monitor_ema_alpha", 0.1))
+    if use_scheduler:
+        sched_type = str(sched_cfg.get("type", "plateau")).lower()
+        if sched_type != "plateau":
+            raise ValueError("training.lr_schedule.type must be 'plateau'")
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer,
+            mode="min",
+            factor=float(sched_cfg.get("factor", 0.5)),
+            patience=int(sched_cfg.get("patience", 200)),
+            threshold=float(sched_cfg.get("threshold", 1e-4)),
+            threshold_mode=str(sched_cfg.get("threshold_mode", "rel")),
+            cooldown=int(sched_cfg.get("cooldown", 100)),
+            min_lr=float(sched_cfg.get("min_lr", 1e-6)),
+            eps=float(sched_cfg.get("eps", 1e-12)),
+        )
+
     grad_clip = float(training.get("grad_clip", 0.0))
     steps = int(training["steps"])
 
@@ -108,6 +129,19 @@ def train_block(
         if grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=grad_clip)
         optimizer.step()
+        lr_before_sched = float(optimizer.param_groups[0]["lr"])
+
+        lr_monitor = float(loss_e.detach().cpu())
+        if use_scheduler and scheduler is not None:
+            if monitor_ema is None:
+                monitor_ema = lr_monitor
+            else:
+                monitor_ema = monitor_alpha * lr_monitor + (1.0 - monitor_alpha) * monitor_ema
+            scheduler.step(monitor_ema)
+            lr_monitor = float(monitor_ema)
+
+        lr_current = float(optimizer.param_groups[0]["lr"])
+        lr_reduced = lr_current < lr_before_sched
 
         s_eigs = torch.linalg.eigvalsh(ritz.S.detach())
         s_min = float(s_eigs[0].cpu())
@@ -126,6 +160,9 @@ def train_block(
             "grad_norm": grad_norm,
             "sampling_mode": sampling_mode,
             "num_points": int(coords.shape[0]),
+            "lr": lr_current,
+            "lr_reduced": bool(lr_reduced),
+            "lr_monitor": lr_monitor,
             "dt_sec": time.time() - t0,
         }
         last = {
